@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聯絡人管理系統 - 前端實作</title>
+    <style>
+        body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        .btn-container { margin-top: 15px; margin-bottom: 20px; }
+        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; margin-right: 5px; color: white; }
+        
+        /* 四個按鈕顏色對應簡報 */
+        .btn-blue { background-color: #2196F3; }   /* + 新增 */
+        .btn-green { background-color: #4CAF50; }  /* ✓ 送出 */
+        .btn-orange { background-color: #FF9800; } /* ✏ 修改 */
+        .btn-red { background-color: #F44336; }    /* ✕ 刪除 */
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr { cursor: pointer; }
+        tr.selected { background-color: #fff3cd; font-weight: bold; }
+    </style>
+</head>
+    <body><h2>聯絡人管理系統</h2>
+
+    <div style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border: 1px solid #ddd;">
+        <label style="font-weight: bold;">🔍 搜尋姓名</label>
+        <input type="text" id="searchName" placeholder="輸入姓名關鍵字..." oninput="loadContacts()">
+    </div>
+    
+    <div id="contactForm">
+        <div class="form-group">
+            <label>姓名</label>
+            <input type="text" id="inputName" placeholder="請輸入姓名">
+        </div>
+        <div class="form-group">
+            <label>電話(例:09xx-xxx-xxx)</label>
+            <input type="text" id="inputPhone" placeholder="請輸入電話">
+        </div>
+        
+        <div class="btn-container">
+            <button class="btn-blue" onclick="clearForm()">+ 新增</button>
+            <button class="btn-green" onclick="submitForm()">✓ 送出</button>
+            <button class="btn-orange" onclick="updateContact()">✏ 修改</button>
+            <button class="btn-red" onclick="deleteContactBtn()">✕ 刪除</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>姓名</th>
+                <th>電話</th>
+            </tr>
+        </thead>
+        <tbody id="contactTableBody"></tbody>
+    </table>
+
+    <script>
+        let selectedId = null; // 全域變數，紀錄目前選取的資料 ID
+        let currentMode = 'add'; // 預設為新增模式
+
+        // 畫面載入時先讀取資料
+        // 畫面載入時先讀取資料（加入搜尋功能）
+        async function loadContacts() {
+            // 1. 抓取搜尋框的文字
+            const keyword = document.getElementById('searchName') ? document.getElementById('searchName').value : '';
+
+            // 2. 把關鍵字帶進網址發送給後端
+            const res = await fetch(`/contacts?keyword=${encodeURIComponent(keyword)}`);
+            const data = await res.json();
+            const tbody = document.getElementById('contactTableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.id = `row-${item.id}`;
+                // 綁定點選整列的事件
+                tr.onclick = () => selectRow(tr, item.id, item.name, item.phone);
+                tr.innerHTML = `
+                    <td>${item.id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.phone}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 👉 右半邊簡報：點選列 ➔ 帶入輸入欄
+        function selectRow(rowElement, id, name, phone) {
+            // 1. 標記選取的列
+            document.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
+            rowElement.classList.add('selected');
+
+            // 2. 帶入輸入欄
+            selectedId = id;
+            document.getElementById('inputName').value = name;
+            document.getElementById('inputPhone').value = phone;
+
+            // 3. 切換修改模式
+            setMode('edit');
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+        }
+
+        // 【+ 新增】按鈕：清空輸入欄、切換回新增模式
+        function clearForm() {
+            document.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
+            selectedId = null;
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputPhone').value = '';
+            setMode('add');
+            console.log('已清空輸入欄，切換回新增模式');
+        }
+
+        // 【✓ 送出】按鈕：判斷新增模式(POST)或修改模式(PUT)
+        async function submitForm() {
+            const name = document.getElementById('inputName').value;
+            const phone = document.getElementById('inputPhone').value;
+            if (!name || !phone) return alert('請填寫姓名和電話');
+
+            // ====== 💡 新增：電話格式驗證 (09xx-xxx-xxx) ======
+            const phoneRegex = /^09\d{2}-\d{3}-\d{3}$/;
+            if (!phoneRegex.test(phone)) {
+                return alert('電話格式不正確！請輸入標準格式，例如：0912-345-678');
+            }
+            // ===============================================
+
+            if (currentMode === 'add') {
+                // 👉 左半邊簡報：新增(POST) Fetch API 核心寫法
+                const res = await fetch('/contacts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone })
+                });
+                const result = await res.json();
+                alert('新增成功！');
+            } else {
+                // 如果在修改模式下按送出，直接導向修改邏輯
+                await updateContact();
+            }
+            clearForm();
+            loadContacts();
+        }
+
+        // 【✏ 修改】按鈕：需先點選資料列，呼叫 PUT API
+        async function updateContact() {
+            if (!selectedId) return alert('需先點選資料列才能進行修改！');
+            const name = document.getElementById('inputName').value;
+            const phone = document.getElementById('inputPhone').value;
+
+            await fetch(`/contacts/${selectedId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, phone })
+            });
+            alert('修改成功！');
+            clearForm();
+            loadContacts();
+        }
+
+        // 【✕ 刪除】按鈕：需先點選資料列，確認後 DELETE
+        async function deleteContactBtn() {
+            if (!selectedId) return alert('需先點選資料列才能進行刪除！');
+            if (!confirm('確認要刪除嗎？')) return;
+
+            // 👉 左半邊簡報：刪除(DELETE) Fetch API 核心寫法
+            const res = await fetch(`/contacts/${selectedId}`, {
+                method: 'DELETE'
+            });
+            
+            alert('刪除成功！');
+            clearForm();
+            loadContacts();
+        }
+
+        // 初始化載入
+        loadContacts();
+    </script>
+</body>
+</html>

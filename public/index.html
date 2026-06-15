@@ -5,48 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>聯絡人管理系統 - 前端實作</title>
     <style>
-        body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; }
-        .btn-container { margin-top: 15px; margin-bottom: 20px; }
-        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; margin-right: 5px; color: white; }
+        /* ✨ 新增：讓粒子背景固定鋪滿全螢幕，並換成科技感深色背景 */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: #1a1e29; /* 深藍黑背景 */
+            z-index: -1; /* 確保它在文字和表格的後面 */
+        }
+
+        /* ✨ 修改：為了在深色背景看清文字，調整整體文字顏色與排版 */
+        body { 
+            font-family: sans-serif; 
+            max-width: 700px; 
+            margin: 40px auto; 
+            padding: 0 20px; 
+            color: #ffffff; /* 內容文字改成白色 */
+        }
         
-        /* 四個按鈕顏色對應簡報 */
+        h2 { text-align: center; margin-bottom: 30px; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #cbd5e1; }
+        
+        /* 讓輸入框帶有一點透明質感 */
+        input { 
+            width: 100%; 
+            padding: 10px; 
+            box-sizing: border-box; 
+            border: 1px solid #475569; 
+            background: rgba(255, 255, 255, 0.9); 
+            border-radius: 4px;
+        }
+        
+        .btn-container { margin-top: 15px; margin-bottom: 20px; }
+        button { padding: 10px 20px; border: none; cursor: pointer; font-weight: bold; margin-right: 5px; color: white; border-radius: 4px; }
+        
+        /* 四個按鈕顏色 */
         .btn-blue { background-color: #2196F3; }   /* + 新增 */
         .btn-green { background-color: #4CAF50; }  /* ✓ 送出 */
         .btn-orange { background-color: #FF9800; } /* ✏ 修改 */
         .btn-red { background-color: #F44336; }    /* ✕ 刪除 */
         
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        tr { cursor: pointer; }
-        tr.selected { background-color: #fff3cd; font-weight: bold; }
+        /* 表格美化：改成適合深色主題的毛玻璃質感 */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(5px); }
+        th, td { border: 1px solid #475569; padding: 12px; text-align: left; }
+        th { background-color: rgba(15, 23, 42, 0.8); color: #38bdf8; }
+        td { color: #e2e8f0; }
+        tr { cursor: pointer; transition: background 0.2s; }
+        tr:hover { background-color: rgba(255, 255, 255, 0.05); }
+        tr.selected { background-color: rgba(255, 243, 205, 0.2); font-weight: bold; color: #fbbf24; }
+        tr.selected td { color: #fbbf24; }
     </style>
 </head>
-    <body><h2>聯絡人管理系統</h2>
+<body>
 
-    <div style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border: 1px solid #ddd;">
-        <label style="font-weight: bold;">🔍 搜尋姓名</label>
-        <input type="text" id="searchName" placeholder="輸入姓名關鍵字..." oninput="loadContacts()">
-    </div>
-    
-    <div id="contactForm">
-        <div class="form-group">
-            <label>姓名</label>
-            <input type="text" id="inputName" placeholder="請輸入姓名">
-        </div>
-        <div class="form-group">
-            <label>電話(例:09xx-xxx-xxx)</label>
-            <input type="text" id="inputPhone" placeholder="請輸入電話">
+    <div id="particles-js"></div>
+
+    <h2>聯絡人管理系統</h2>
+
+    <div style="margin-bottom: 20px; background: rgba(30, 41, 59, 0.6); padding: 20px; border: 1px solid #475569; border-radius: 8px;">
+        <div style="margin-bottom: 15px;">
+            <label style="font-weight: bold;">🔍 搜尋姓名</label>
+            <input type="text" id="searchName" placeholder="輸入姓名關鍵字..." oninput="loadContacts()">
         </div>
         
-        <div class="btn-container">
-            <button class="btn-blue" onclick="clearForm()">+ 新增</button>
-            <button class="btn-green" onclick="submitForm()">✓ 送出</button>
-            <button class="btn-orange" onclick="updateContact()">✏ 修改</button>
-            <button class="btn-red" onclick="deleteContactBtn()">✕ 刪除</button>
+        <div id="contactForm">
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" id="inputName" placeholder="請輸入姓名">
+            </div>
+            <div class="form-group">
+                <label>電話(例:09xx-xxx-xxx)</label>
+                <input type="text" id="inputPhone" placeholder="請輸入電話">
+            </div>
+            
+            <div class="btn-container">
+                <button class="btn-blue" onclick="clearForm()">+ 新增</button>
+                <button class="btn-green" onclick="submitForm()">✓ 送出</button>
+                <button class="btn-orange" onclick="updateContact()">✏ 修改</button>
+                <button class="btn-red" onclick="deleteContactBtn()">✕ 刪除</button>
+            </div>
         </div>
     </div>
 
@@ -62,16 +103,11 @@
     </table>
 
     <script>
-        let selectedId = null; // 全域變數，紀錄目前選取的資料 ID
-        let currentMode = 'add'; // 預設為新增模式
+        let selectedId = null; 
+        let currentMode = 'add'; 
 
-        // 畫面載入時先讀取資料
-        // 畫面載入時先讀取資料（加入搜尋功能）
         async function loadContacts() {
-            // 1. 抓取搜尋框的文字
             const keyword = document.getElementById('searchName') ? document.getElementById('searchName').value : '';
-
-            // 2. 把關鍵字帶進網址發送給後端
             const res = await fetch(`/contacts?keyword=${encodeURIComponent(keyword)}`);
             const data = await res.json();
             const tbody = document.getElementById('contactTableBody');
@@ -80,7 +116,6 @@
             data.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.id = `row-${item.id}`;
-                // 綁定點選整列的事件
                 tr.onclick = () => selectRow(tr, item.id, item.name, item.phone);
                 tr.innerHTML = `
                     <td>${item.id}</td>
@@ -91,18 +126,14 @@
             });
         }
 
-        // 👉 右半邊簡報：點選列 ➔ 帶入輸入欄
         function selectRow(rowElement, id, name, phone) {
-            // 1. 標記選取的列
             document.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
             rowElement.classList.add('selected');
 
-            // 2. 帶入輸入欄
             selectedId = id;
             document.getElementById('inputName').value = name;
             document.getElementById('inputPhone').value = phone;
 
-            // 3. 切換修改模式
             setMode('edit');
         }
 
@@ -110,47 +141,50 @@
             currentMode = mode;
         }
 
-        // 【+ 新增】按鈕：清空輸入欄、切換回新增模式
         function clearForm() {
             document.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
             selectedId = null;
             document.getElementById('inputName').value = '';
             document.getElementById('inputPhone').value = '';
             setMode('add');
-            console.log('已清空輸入欄，切換回新增模式');
         }
 
-        // 【✓ 送出】按鈕：判斷新增模式(POST)或修改模式(PUT)
         async function submitForm() {
             const name = document.getElementById('inputName').value;
             const phone = document.getElementById('inputPhone').value;
             if (!name || !phone) return alert('請填寫姓名和電話');
 
-            // ====== 💡 新增：電話格式驗證 (09xx-xxx-xxx) ======
             const phoneRegex = /^09\d{2}-\d{3}-\d{3}$/;
             if (!phoneRegex.test(phone)) {
                 return alert('電話格式不正確！請輸入標準格式，例如：0912-345-678');
             }
-            // ===============================================
 
             if (currentMode === 'add') {
-                // 👉 左半邊簡報：新增(POST) Fetch API 核心寫法
-                const res = await fetch('/contacts', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone })
-                });
-                const result = await res.json();
-                alert('新增成功！');
+                try {
+                    const res = await fetch('/contacts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, phone })
+                    });
+                    const result = await res.json();
+
+                    if (!res.ok) {
+                        throw new Error(result.error || '新增失敗');
+                    }
+
+                    alert('新增成功！');
+                    clearForm();
+                    loadContacts();
+                } catch (error) {
+                    alert(error.message);
+                }
             } else {
-                // 如果在修改模式下按送出，直接導向修改邏輯
                 await updateContact();
+                clearForm();
+                loadContacts();
             }
-            clearForm();
-            loadContacts();
         }
 
-        // 【✏ 修改】按鈕：需先點選資料列，呼叫 PUT API
         async function updateContact() {
             if (!selectedId) return alert('需先點選資料列才能進行修改！');
             const name = document.getElementById('inputName').value;
@@ -166,23 +200,41 @@
             loadContacts();
         }
 
-        // 【✕ 刪除】按鈕：需先點選資料列，確認後 DELETE
         async function deleteContactBtn() {
             if (!selectedId) return alert('需先點選資料列才能進行刪除！');
             if (!confirm('確認要刪除嗎？')) return;
 
-            // 👉 左半邊簡報：刪除(DELETE) Fetch API 核心寫法
             const res = await fetch(`/contacts/${selectedId}`, {
                 method: 'DELETE'
             });
-            
             alert('刪除成功！');
             clearForm();
             loadContacts();
         }
 
-        // 初始化載入
         loadContacts();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // ✅ 初始化粒子效果
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#ffffff" },
+                "shape": { "type": "circle", "stroke": { "width": 0, "color": "#000000" }, "polygon": { "nb_sides": 5 } },
+                "opacity": { "value": 0.5, "random": false, "anim": { "enable": false, "speed": 1, "opacity_min": 0.1, "sync": false } },
+                "size": { "value": 3, "random": true, "anim": { "enable": false, "speed": 20, "size_min": 0.1, "sync": false } },
+                "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1 },
+                "move": { "enable": true, "speed": 1.5, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false, "attract": { "enable": false, "rotateX": 600, "rotateY": 1200 } }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 1 } }, "bubble": { "distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3 }, "repulse": { "distance": 200, "duration": 0.4 }, "push": { "particles_nb": 4 }, "remove": { "particles_nb": 2 } }
+            },
+            "retina_detect": true
+        });
     </script>
 </body>
 </html>
